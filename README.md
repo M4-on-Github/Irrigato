@@ -69,8 +69,13 @@ Final_proj_Irrigation_Need/
 ├── analysis.R                  # Core pipeline: data loading, EDA, model training, inference
 ├── visualization.R             # Advanced visualizations & model explainability (extends analysis.R)
 ├── playground-series-s6e4/     # Raw dataset (train.csv, test.csv, sample_submission.csv)
-├── final_submission.csv        # Predicted irrigation needs for the test set
-├── analysis/                   # All generated outputs (charts, model exports, CSVs)
+├── analysis/                   # Outputs from analysis.R (basic EDA, variable importance, submission)
+│   ├── eda_target_distribution.png
+│   ├── eda_soil_moisture.png
+│   ├── eda_rainfall.png
+│   ├── model_variable_importance.png
+│   └── final_submission.csv    # Predicted irrigation needs for the test set
+├── visualization/              # Outputs from visualization.R (advanced charts, model exports)
 │   ├── eda_numeric_correlation.png
 │   ├── eda_crop_irrigation_prop.png
 │   ├── eda_moisture_growth_violin.png
@@ -106,17 +111,17 @@ Before building the model, we investigated the structure and relationships withi
 #### Correlation Heatmap
 A correlation matrix of all numerical features reveals which environmental variables move together. For example, this helps identify whether temperature and sunlight hours are redundant, or whether rainfall and soil moisture are as correlated as one might assume.
 
-![Correlation Heatmap](analysis/eda_numeric_correlation.png)
+![Correlation Heatmap](visualization/eda_numeric_correlation.png)
 
 #### Irrigation Need by Crop Type
 Rather than just counting crops, this proportional stacked bar chart shows what **percentage** of each crop type falls into Low, Medium, or High irrigation need — instantly highlighting which crops are the most water-demanding.
 
-![Crop Type Proportions](analysis/eda_crop_irrigation_prop.png)
+![Crop Type Proportions](visualization/eda_crop_irrigation_prop.png)
 
 #### Soil Moisture × Growth Stage Interaction
 Violin plots layered with boxplots show how the distribution of soil moisture differs across crop growth stages, segmented by irrigation need. This reveals that the **threshold** at which irrigation becomes necessary shifts depending on how mature the crop is.
 
-![Moisture vs Growth Stage](analysis/eda_moisture_growth_violin.png)
+![Moisture vs Growth Stage](visualization/eda_moisture_growth_violin.png)
 
 ### 3. Model Training & Classification
 
@@ -130,7 +135,7 @@ The model was trained on the 80% training split and evaluated on the held-out 20
 
 The confusion matrix heatmap below shows the model's predictions vs. the actual labels on the validation set:
 
-![Confusion Matrix](analysis/exp_confusion_matrix.png)
+![Confusion Matrix](visualization/exp_confusion_matrix.png)
 
 #### Performance Metrics
 
@@ -153,19 +158,19 @@ Understanding *why* the model makes its decisions is just as important as raw ac
 #### Error Convergence
 This plot tracks the Out-of-Bag (OOB) error rate as trees are added to the forest. It demonstrates that the model converges and stabilizes well before 100 trees, confirming that our ensemble size is sufficient.
 
-![Error Convergence](analysis/exp_rf_error_convergence.png)
+![Error Convergence](visualization/exp_rf_error_convergence.png)
 
 #### Feature Importance
 The Variable Importance Plot (VIP) ranks every feature by how much it contributes to reducing classification error. The top predictors reveal what the model considers most critical when deciding irrigation need.
 
-![Feature Importance](analysis/exp_feature_importance.png)
+![Feature Importance](visualization/exp_feature_importance.png)
 
 #### Surrogate Decision Tree
 Since a Random Forest is an ensemble of 100 trees, it cannot be visualized as a single flowchart. Instead, we fit a **surrogate decision tree** (using `rpart`) to approximate the forest's logic. This provides a human-readable flowchart showing the primary split rules and thresholds the model relies on.
 
-![Surrogate Tree](analysis/exp_surrogate_tree.png)
+![Surrogate Tree](visualization/exp_surrogate_tree.png)
 
-> The raw split rules for Tree #1 of the actual Random Forest are also exported to `analysis/rf_tree_1_raw_splits.csv` for detailed inspection.
+> The raw split rules for Tree #1 of the actual Random Forest are also exported to `visualization/rf_tree_1_raw_splits.csv` for detailed inspection.
 
 #### Partial Dependence Plots
 
@@ -173,14 +178,14 @@ Partial Dependence Plots (PDPs) isolate the marginal effect of a single feature 
 
 | Soil Moisture | Rainfall |
 |---|---|
-| ![PDP Moisture](analysis/exp_pdp_soil_moisture.png) | ![PDP Rainfall](analysis/exp_pdp_rainfall.png) |
+| ![PDP Moisture](visualization/exp_pdp_soil_moisture.png) | ![PDP Rainfall](visualization/exp_pdp_rainfall.png) |
 
 ### 5. Multi-Dimensional Analysis
 
 #### Seasonal Environmental Triggers
 This faceted scatter plot visualizes the interaction between **Rainfall**, **Soil Moisture**, **Season**, and **Irrigation Need** simultaneously. Each panel represents a season, and points are colored by the irrigation decision — revealing how environmental baselines shift across seasons and how that affects water needs.
 
-![Season Facets](analysis/multi_season_facet.png)
+![Season Facets](visualization/multi_season_facet.png)
 
 ---
 
@@ -192,8 +197,8 @@ This faceted scatter plot visualizes the interaction between **Rainfall**, **Soi
 | **Overall Accuracy** | 98.63% |
 | **Kappa** | 0.9731 |
 | **Top Predictors** | Soil Moisture, Rainfall, Temperature, Humidity |
-| **Test Predictions** | Exported to `final_submission.csv` |
-| **Serialized Model** | `analysis/rf_model.rds` (reloadable) |
+| **Test Predictions** | Exported to `analysis/final_submission.csv` |
+| **Serialized Model** | `visualization/rf_model.rds` (reloadable) |
 
 ### Key Insights
 
@@ -220,7 +225,7 @@ This will:
 - Generate initial EDA plots
 - Train the Random Forest model
 - Evaluate on the validation set
-- Generate test predictions → `final_submission.csv`
+- Generate test predictions → `analysis/final_submission.csv`
 
 ### Step 2: Generate Advanced Visualizations
 With the model still in memory, run:
@@ -229,14 +234,14 @@ source("visualization.R")
 ```
 This will:
 - Detect the existing `rf_model` and `train_data` from Step 1 (no retraining!)
-- Generate all advanced charts into the `analysis/` folder
+- Generate all advanced charts into the `visualization/` folder
 - Export the serialized model, feature importance CSV, and confusion matrix heatmap
 
 > **Note:** If `visualization.R` is run in a fresh R session, it will automatically `source("analysis.R")` first.
 
 ### Reloading the Model Later
 ```r
-rf_model <- readRDS("analysis/rf_model.rds")
+rf_model <- readRDS("visualization/rf_model.rds")
 ```
 
 ---
