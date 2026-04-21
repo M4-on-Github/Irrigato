@@ -8,7 +8,7 @@
 # ------------------------------------------------------------------------------
 # Setup Packages and Libraries
 # ------------------------------------------------------------------------------
-required_packages <- c("tidyverse", "randomForest", "corrplot", "pdp", "vip", "ggcorrplot", "scales")
+required_packages <- c("tidyverse", "randomForest", "corrplot", "pdp", "vip", "ggcorrplot", "scales", "rpart", "rpart.plot")
 new_packages <- required_packages[!(required_packages %in% installed.packages()[,"Package"])]
 if (length(new_packages) > 0) {
   cat("Installing missing packages: ", paste(new_packages, collapse = ", "), "\n")
@@ -22,6 +22,8 @@ library(pdp)
 library(vip)
 library(ggcorrplot)
 library(scales)
+library(rpart)
+library(rpart.plot)
 
 # ------------------------------------------------------------------------------
 # Dependency Check: Ensure analysis.R has been run to provide data and model
@@ -127,7 +129,24 @@ p_vip <- vip(rf_model, num_features = 12, geom = "col", fill = "#20639B") +
 
 ggsave(file.path(out_dir, "exp_feature_importance.png"), plot = p_vip, width = 8, height = 6, dpi = 300)
 
-# 2B & 2C Partial Dependence Plots
+# 2C. Surrogate Decision Tree (Visualizing Splits)
+cat(" -> Generating Surrogate Decision Tree (flowchart of split rules)...\n")
+# A random forest cannot be plotted as a single visual tree, so we build a surrogate rpart tree 
+# to structurally capture & visualize its primary splitting rules visually!
+surrogate_tree <- rpart(Irrigation_Need ~ ., data = train_data, maxdepth = 4, method="class")
+
+png(file.path(out_dir, "exp_surrogate_tree.png"), width = 1000, height = 800, res=120)
+rpart.plot(surrogate_tree, 
+           main = "Surrogate Decision Tree (Approximating Random Forest Logic)",
+           type = 3, extra = 104, fallen.leaves = TRUE, shadow.col = "gray",
+           box.palette = list("#ED553B", "#3CAEA3", "#F2B134"))
+dev.off()
+
+cat(" -> Exporting raw structural split rules for Tree #1...\n")
+tree_1_rules <- getTree(rf_model, k = 1, labelVar = TRUE)
+write.csv(tree_1_rules, file.path(out_dir, "rf_tree_1_raw_splits.csv"))
+
+# 2D & 2E Partial Dependence Plots
 cat(" -> Preparing subsets for PDP (to accelerate rendering)...\n")
 # Sampling data purely to make the mathematical Partial Dependence calculation run faster
 pdp_sample <- train_set
@@ -186,6 +205,37 @@ p_facet <- ggplot(plot_data, aes(x = Rainfall_mm, y = Soil_Moisture, color = Irr
 
 ggsave(file.path(out_dir, "multi_season_facet.png"), plot = p_facet, width = 10, height = 7, dpi = 300)
 
+# ==============================================================================
+# SECTION 4: Model Exporting & Metrics
+# ==============================================================================
+cat("\n[4/4] Exporting Model and Metadata...\n")
+
+# 4A. Export the entire Random Forest Model object
+cat(" -> Saving rf_model.rds to analysis folder...\n")
+saveRDS(rf_model, file = file.path(out_dir, "rf_model.rds"))
+
+# 4B. Export Feature Importance to CSV
+cat(" -> Saving Feature Importance CSV...\n")
+imp_df <- as.data.frame(randomForest::importance(rf_model))
+imp_df$Feature <- rownames(imp_df)
+write.csv(imp_df, file.path(out_dir, "rf_feature_importance.csv"), row.names = FALSE)
+
+# 4C. High-Quality Confusion Matrix Heatmap (if evaluated in analysis.R)
+if (exists("conf_matrix")) {
+  cat(" -> Plotting Confusion Matrix...\n")
+  cm_data <- as.data.frame(conf_matrix$table)
+  p_cm <- ggplot(cm_data, aes(x = Reference, y = Prediction, fill = Freq)) +
+    geom_tile(color = "white", linewidth = 1) +
+    geom_text(aes(label = Freq), color = "white", size = 6, fontface = "bold") +
+    scale_fill_viridis_c(option = "mako", begin = 0.2, end = 0.8) +
+    labs(title = "Validation Confusion Matrix",
+         subtitle = "Performance of Random Forest on held-out validation set",
+         x = "Actual Irrigation Need", y = "Predicted Irrigation Need", fill = "Count") +
+    my_theme + theme(legend.position = "right")
+  
+  ggsave(file.path(out_dir, "exp_confusion_matrix.png"), plot = p_cm, width = 7, height = 6, dpi = 300)
+}
+
 cat("\n========================================================================\n")
-cat("SUCCESS! All visualizations have been generated in the 'analysis' directory.\n")
+cat("SUCCESS! All visualizations and model exports have been saved in the 'analysis' directory.\n")
 cat("========================================================================\n")
