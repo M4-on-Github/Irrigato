@@ -38,7 +38,10 @@ if(sum_na > 0) {
 # ------------------------------------------------------------------------------
 # 2. Exploratory Data Analysis (EDA)
 # ------------------------------------------------------------------------------
-cat("Generating EDA plots (Saving to current directory)...\n")
+# Create output directory for all analysis artifacts
+dir.create("analysis", showWarnings = FALSE)
+
+cat("Generating EDA plots (Saving to analysis/)...\n")
 
 # 2.A Target Variable Distribution
 p_target <- ggplot(train_data, aes(x = Irrigation_Need, fill = Irrigation_Need)) +
@@ -47,7 +50,7 @@ p_target <- ggplot(train_data, aes(x = Irrigation_Need, fill = Irrigation_Need))
   labs(title = "Distribution of Irrigation Need Classes", 
        x = "Irrigation Need", y = "Count") +
   theme(legend.position = "none") # Clearer plots for presentations
-ggsave("eda_target_distribution.png", plot = p_target, width = 6, height = 4)
+ggsave("analysis/eda_target_distribution.png", plot = p_target, width = 6, height = 4)
 
 # 2.B Relationship: Soil Moisture vs Irrigation Need
 p_moist <- ggplot(train_data, aes(x = Irrigation_Need, y = Soil_Moisture, fill = Irrigation_Need)) +
@@ -56,7 +59,7 @@ p_moist <- ggplot(train_data, aes(x = Irrigation_Need, y = Soil_Moisture, fill =
   labs(title = "Impact of Soil Moisture on Irrigation Need", 
        x = "Irrigation Need Classification", y = "Soil Moisture (%)") +
   theme(legend.position = "none")
-ggsave("eda_soil_moisture.png", plot = p_moist, width = 6, height = 4)
+ggsave("analysis/eda_soil_moisture.png", plot = p_moist, width = 6, height = 4)
 
 # 2.C Relationship: Rainfall vs Irrigation Need
 p_rain <- ggplot(train_data, aes(x = Irrigation_Need, y = Rainfall_mm, fill = Irrigation_Need)) +
@@ -65,7 +68,7 @@ p_rain <- ggplot(train_data, aes(x = Irrigation_Need, y = Rainfall_mm, fill = Ir
   labs(title = "Impact of Rainfall on Irrigation Need", 
        x = "Irrigation Need Classification", y = "Rainfall (mm)") +
   theme(legend.position = "none")
-ggsave("eda_rainfall.png", plot = p_rain, width = 6, height = 4)
+ggsave("analysis/eda_rainfall.png", plot = p_rain, width = 6, height = 4)
 
 # ------------------------------------------------------------------------------
 # 3. Modeling & Classification
@@ -91,7 +94,7 @@ print(conf_matrix)
 
 # Variable Importance Plot
 # Excellent for PowerPoint slide discussions!
-png("model_variable_importance.png", width = 800, height = 600)
+png("analysis/model_variable_importance.png", width = 800, height = 600)
 varImpPlot(rf_model, main = "Feature Importance for Predicting Irrigation Need", pch=16, col="blue")
 dev.off()
 
@@ -107,5 +110,5 @@ test_predictions <- predict(rf_model, newdata = test_data)
 submission <- data.frame(id = test_data$id, Irrigation_Need = test_predictions)
 
 # Save the predictions to a CSV file
-write.csv(submission, "final_submission.csv", row.names = FALSE)
-cat("Completed successfully! Results saved to 'final_submission.csv'.\n")
+write.csv(submission, "analysis/final_submission.csv", row.names = FALSE)
+cat("Completed successfully! Results saved to 'analysis/final_submission.csv'.\n")

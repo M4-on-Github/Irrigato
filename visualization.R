@@ -37,7 +37,7 @@ if (!exists("rf_model") || !exists("train_data")) {
 }
 
 # Setup Output Directory
-out_dir <- "analysis"
+out_dir <- "visualization"
 if (!dir.exists(out_dir)) {
   dir.create(out_dir)
   cat(sprintf("Created output directory: %s\n", out_dir))
