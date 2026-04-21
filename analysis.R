@@ -15,13 +15,17 @@ library(caret)
 # ------------------------------------------------------------------------------
 cat("Loading data...\n")
 test_data <- read.csv("~/dataMining/Final_proj_Irrigation_Need/playground-series-s6e4/test.csv")
-View(test_data)
+# View(test_data)
 train_data <- read.csv("~/dataMining/Final_proj_Irrigation_Need/playground-series-s6e4/train.csv")
-View(train_data)
+# View(train_data)
 #sample_sub <- read.csv("playground-series-s6e4/sample_submission.csv")
 
 # We drop the 'id' column from the data frame used for modeling
 train_data <- train_data %>% select(-id)
+
+# Convert all character columns to factors (required by randomForest)
+train_data <- train_data %>% mutate(across(where(is.character), as.factor))
+test_data <- test_data %>% mutate(across(where(is.character), as.factor))
 
 # Check for missing values
 sum_na <- sum(is.na(train_data))
