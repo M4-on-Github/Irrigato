@@ -1,4 +1,4 @@
-# 🌾 Irrigation Need Prediction
+# 🌾 Irrigato - Irrigation Need Prediction
 
 > **CSC 314 — Data Mining Final Project | Spring 2026**
 
@@ -32,7 +32,7 @@ Efficient water management is critical in modern agriculture. Over-irrigation wa
 
 **Source:** [Kaggle — Playground Series S6E4](https://www.kaggle.com/competitions/playground-series-s6e4)
 
-The dataset contains **628,000+ training records** and **418,000+ test records** across **20 features** describing environmental factors, soil characteristics, and crop metadata.
+The dataset contains **628,000+ training records** and **270,000+ test records** across **20 features** describing environmental factors, soil characteristics, and crop metadata.
 
 | Feature | Description |
 |---|---|
@@ -99,7 +99,7 @@ Final_proj_Irrigation_Need/
 
 ### 1. Data Preparation
 
-- Loaded `train.csv` (~628K rows) and `test.csv` (~418K rows).
+- Loaded `train.csv` (~628K rows) and `test.csv` (~270K rows).
 - Dropped the `id` column (non-predictive identifier).
 - Converted all character columns to **factors** (required by the `randomForest` package).
 - Verified **zero missing values** — no imputation needed.
